@@ -1,0 +1,26 @@
+{
+  "name": "web_security_labs",
+  "version": "1.0.0",
+  "description": "This repository contains code example that are done in class for Web Security course.",
+  "main": "app.js",
+  "type": "module",
+  "dependencies": {
+    "argon2": "^0.43.0",
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.15.2",
+    "multer": "^2.0.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@github.com-prashsharma88:prashsharma88/Web_Security_Labs.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}

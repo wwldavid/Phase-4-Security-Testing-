@@ -1,0 +1,90 @@
+:root {
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: light dark;
+  color: rgba(255, 255, 255, 0.87);
+  background-color: #EEEEEE;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  font-size: 20px;
+}
+
+body {
+  width: 100%;
+  min-height: 100vh;
+  background-color: #EEEEEE;
+  position: relative;
+}
+
+#root {
+  padding-top: 150px;
+  display: flex;
+  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  height: 100%;
+  width: 100%;
+}
+
+.btn {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+  border-width: 1px;
+  min-width: 200px;
+  padding: 15px;
+  border-radius: 10px;
+  color: #FFF;
+  font-weight: 600;
+  font-size: 1.1rem;
+  z-index: 0;
+  transition: color 0.5s ease;
+  position: relative;
+}
+
+.btn:hover {
+  color: #0d6efd;
+  background-color: #FFF;
+}
+/* 
+.btn::before {
+  content: "";
+  background-color: #0d6efd;
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  right: 50%;
+  transition: left 0.5s ease-in-out, right 0.5s ease-in-out;
+  z-index: -1;
+}
+
+.btn:hover::before {
+  right: 0;
+  left: 0;
+} */
+
+.title {
+  color: #0D5EA6;
+  text-align: center;
+
+}
+
+.txt {
+  font-size: 1.1rem;
+  color: #45474B;
+  font-weight: 600;
+}

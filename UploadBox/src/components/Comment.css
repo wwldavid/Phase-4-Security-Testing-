@@ -1,0 +1,24 @@
+.usr {
+    font-size: 0.8rem;
+    font-weight: 900;
+    margin-bottom: 10px;
+    color: #0d6efd;
+}
+
+.cmt {
+    font-size: 1rem;
+}
+
+.comment-container {
+    border: 1px solid black;
+    border-radius: 15px;
+    margin-bottom: 15px;
+    padding: 10px
+}
+
+#composer {
+    width: 100% !important;
+    font-size: 1rem;
+    padding: 15px;
+    border-radius: 15px;
+}

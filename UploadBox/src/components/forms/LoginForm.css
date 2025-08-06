@@ -1,0 +1,44 @@
+#login-form-section {
+    width: 80%;
+    padding: 20px;
+    background-color: #FFF;
+    border-radius: 15px;
+    box-shadow: 5px 20px 20px rgba(0,0,0,0.33);
+}
+
+#login-form-section > form {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 30px;
+    margin: 40px
+}
+
+.form-input {
+    width: 80%;
+    height: 2.5rem;
+    border-radius: 5px;
+    font-size: 1.2rem;
+    padding: 0 10px;
+}
+
+.form-input:focus {
+    box-shadow: 2px 2px 2px rgb(147, 214, 237), -2px -2px 2px lightblue;
+}
+
+#no-account {
+    color: black;
+    text-align: center;
+}
+#no-account > a {
+    text-decoration: underline;
+    cursor: pointer;
+    color: blue;
+}
+
+#no-account > a:hover {
+    text-decoration: none;
+}

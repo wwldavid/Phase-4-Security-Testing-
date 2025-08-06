@@ -1,0 +1,32 @@
+section {
+    width: 80%;
+    margin: 30px auto;
+    background-color: #FFF;
+    padding: 40px;
+    border-radius: 15px;
+}
+
+.label {
+    color: #FF7601;
+    width: 200px;
+    display: inline-block;
+}
+
+p[class='txt'] {
+    padding: 10px;
+    border-bottom: 2px solid rgba(0,0,0,0.55);
+}
+
+#default-view-section > p {
+    text-align: center;
+    padding: 10px;
+}
+
+.status-msg {
+    font-size: 0.7rem;
+}
+
+#fileinput-div {
+    display: flex;
+    margin: 20px 0;
+}
