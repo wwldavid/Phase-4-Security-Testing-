@@ -1,55 +1,6 @@
 Web Security Assessment – UploadBox (React) & ExpressApp (Node/Express + MongoDB)
 Frontend dev server runs at http://localhost:5173
 
-Threat Model (Mermaid Diagram)
-
-flowchart LR
-%% External Entities
-attacker[Attacker Site\n(csrf.html:9999)]
-user[End User Browser\n(UploadBox UI)]
-
-%% Frontend
-subgraph Frontend [Trust Boundary: Frontend (Vite Dev, :5173)]
-ui[React App\nhttp://localhost:5173]
-end
-
-%% Backend
-subgraph Backend [Trust Boundary: Backend API (Express, :3000)]
-api[Express API\nhelmet + CORS + JWT]
-filesvc[File Upload Service\nmulter]
-commentsvc[Comment Service\nsanitize-html]
-end
-
-%% Data Stores
-subgraph DataStores [Trust Boundary: Local Host I/O]
-db[(MongoDB\nabac_lab)]
-fs[(File System\nuploads/)]
-end
-
-%% Flows
-user -->|1. POST /user/login\n{username,password}| api
-api -->|2. 200 {authToken,..}| user
-
-user -->|3. POST /file (FormData)\nAuthorization: Bearer JWT| filesvc
-filesvc -->|Store file meta| db
-filesvc -->|Write file| fs
-
-user -->|4. POST /comment {commenttxt}\nAuthorization: Bearer JWT| commentsvc
-commentsvc -->|sanitize & save| db
-user -->|5. GET /comment\nAuthorization: Bearer JWT| commentsvc
-commentsvc -->|list comments| user
-
-attacker -.->|Cross-site form POST\n(no Authorization)| api
-attacker -.->|Trick victim's browser| ui
-
-%% Links
-api <--> db
-filesvc <--> fs
-commentsvc <--> db
-
-classDef boundary fill:#f7f7f7,stroke:#aaa,stroke-dasharray: 5 5;
-class Frontend,Backend,DataStores boundary;
-
 ## Register and Log in (Manual Test)
 
 1.  Register a test account
