@@ -1,6 +1,3 @@
-Web Security Assessment – UploadBox (React) & ExpressApp (Node/Express + MongoDB)
-Frontend dev server runs at http://localhost:5173
-
 ## Register and Log in (Manual Test)
 
 1.  Register a test account
