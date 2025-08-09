@@ -1,4 +1,4 @@
-## Manual Test
+## Register and Log in (Manual Test)
 
 1.  Register a test account
     David
@@ -117,6 +117,109 @@
     Correction:
     Parse only application/json and remove urlencoded parsing to prevent form data from being treated as valid JSON (helps mitigate CSRF).
     helmet + app.disable("x-powered-by") to enhance security header settings.
+
+### Security testing of the upload functionality (manual + automated)
+
+1. Authentication / Access Control
+   curl -i -F "file=@/etc/hosts" http://127.0.0.1:3000/file/
+   "message":"No token, authorization denied"
+
+   "authToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzMDM1NTQ3NjciLCJ1c2VybmFtZSI6IkRhdmlkd2FubG9uZyIsImRlcGFydG1lbnQiOiJociIsInJvbGUiOiJlbXBsb3llZSIsImlhdCI6MTc1NDc0NzQxMywiZXhwIjoxNzU0NzUxMDEzfQ.QHJD3VFRVqNpL5RBKGNvrBho-B7r8Bv_8eqdPqxKqG0",
+   "username": "Davidwanlong",
+
+   TOKEN='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzMDM1NTQ3NjciLCJ1c2VybmFtZSI6IkRhdmlkd2FubG9uZyIsImRlcGFydG1lbnQiOiJociIsInJvbGUiOiJlbXBsb3llZSIsImlhdCI6MTc1NDc0NzQxMywiZXhwIjoxNzU0NzUxMDEzfQ.QHJD3VFRVqNpL5RBKGNvrBho-B7r8Bv_8eqdPqxKqG0'
+   curl -i -H "Authorization: Bearer $TOKEN" \
+    -F "file=@/etc/hosts" \
+    http://127.0.0.1:3000/file/
+   "message":"file uploaded","file":{"filename":"hosts","path":"uploads/88d743885f938a9ff655aeb3d2aa8af8","uploadedBy":"Davidwanlong","department":"hr","\_id":"689752d3034e48429e849219","createdAt":"2025-08-09T13:53:23.882Z","\_\_v":0}
+
+   TOKEN=$(curl -s -X POST http://127.0.0.1:3000/user/login \
+    -H "Content-Type: application/json" \
+    -d '{"username":"Davidwanlong","password":"P@ss0rd!"}' \
+  | sed -n 's/.*"authToken":"\([^"]*\)".*/\1/p')
+    echo "$TOKEN"
+
+   curl -i -H "Authorization: Bearer bad.token.here" \
+    -F "file=@/etc/hosts" \
+    http://127.0.0.1:3000/file/
+   500 Internal Server Error
+   Conclusion: authentication middleware/routes do not properly catch JWT verification exceptions, allowing user-supplied input to bubble up as HTTP 500 (server error). This not only impacts UX, but could also be abused as a low-cost DoS vector (flooding the server with invalid tokens to overwhelm error logs).
+   Correction:
+
+   curl -i -H "Authorization: Bearer $TOKEN" \
+    -F 'file=@/etc/hosts;filename="<img src=x onerror=alert(1)>.txt"' \
+    http://127.0.0.1:3000/file/
+
+   curl -i -F "file=@/etc/hosts" http://127.0.0.1:3000/file/
+   No Token → 401
+
+   curl -i -H "Authorization: Bearer bad.token.here" -F "file=@/etc/hosts" http://127.0.0.1:3000/file/
+   False Token → 401
+
+   TOKEN='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9. eyJ1c2VySWQiOiIzMDM1NTQ3NjciLCJ1c2VybmFtZSI6IkRhdmlkd2FubG9uZyIsImRlcGFydG1lbnQiOiJociIsInJvbGUiOiJlbXBsb3llZSIsImlhdCI6MTc 1NDc0NzQxMywiZXhwIjoxNzU0NzUxMDEzfQ.QHJD3VFRVqNpL5RBKGNvrBho-B7r8Bv_8eqdPqxKqG0'
+   curl -i -H "Authorization: Bearer $TOKEN" -F "file=@/etc/hosts" http://127.0.0.1:3000/file/
+
+### Security testing of CommentComposer
+
+1. Stored XSS
+
+   TOKEN='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiIzMDM1NTQ3NjciLCJ1c2VybmFtZSI6IkRhdmlkd2FubG9uZyIsImRlcGFydG1lbnQiOiJociIsInJvbGUiOiJlbXBsb3llZSIsImlhdCI6MTc1NDc1Nzk1OSwiZXhwIjoxNzU0NzYxNTU5fQ.fbMcdyBlwZRZ4MSDp23st3TvGEpryuIUEi53rE-ftDw'
+
+   curl -i -X POST http://127.0.0.1:3000/comment \
+    -H "Authorization: Bearer $TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"username":"Davidwanlong","commenttxt":"<img src=x onerror=alert(1)>"}'
+   "message":"comment saved","comment":{"user":"Davidwanlong","text":"<img src=x onerror=alert(1)>"}
+   The backend does not perform HTML escaping or sanitization on the comment content, resulting in a stored XSS vulnerability.
+
+   curl -i -X POST http://127.0.0.1:3000/comment \
+    -H "Authorization: Bearer $TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"username":"Davidwanlong","commenttxt":"<script>alert(1)</script>"}'
+   The comment containing <script>alert(1)</script> was successfully saved without any sanitization or escaping on the backend, indicating a stored Cross-Site Scripting (XSS) vulnerability. This allows malicious scripts to be stored and executed in users’ browsers.
+
+   Correction:
+   npm i sanitize-html
+   <img src=x onerror=alert(1)> is sanitized to empty, the API returns 400 Bad Request, and the presence of X-RateLimit-\* headers indicates rate limiting is working. The stored XSS vulnerability has been effectively mitigated.
+
+2. Identity forgery Test(username controllable on the client side)
+
+   curl -i -X POST http://127.0.0.1:3000/comment \
+    -H "Authorization: Bearer $TOKEN" \
+    -H "Content-Type: application/json" \
+    -d '{"username":"admin","commenttxt":"i am not admin"}'
+   Use case: POST /comment request body forges "username":"admin"
+   Expected/Actual result: The backend still saves the comment with the username "Davidwanlong" from the JWT (the request body field is ignored)
+   Conclusion: Identity forgery via the request body has been prevented in commenting.
+
+3.CSRF Test
+
+<!-- csrf-comment.html -->
+<form action="http://127.0.0.1:3000/comment" method="POST">
+  <input name="commenttxt" value="<b>csrf?</b>">
+</form>
+<script>document.forms[0].submit()</script>
+    python3 -m http.server 9999   http://127.0.0.1:9999/csrf-comment.html，
+       Network：
+       Request URL
+       http://127.0.0.1:3000/comment
+       Request Method
+       POST
+       Status Code
+       401 Unauthorized
+       Remote Address
+       127.0.0.1:3000
+       Referrer Policy
+       strict-origin-when-cross-origin
+       The response “No token, authorization denied” indicates that the API rejected the request because no token was provided.
+
+4.  Abuse/Spam (DoS/Spam): Submitting overly long comments (>500 characters) should be rejected by the backend (the
+    frontend has maxLength=500 but it cannot be relied upon).
+    Correction:
+    npm i express-rate-limit
+    import rateLimit from "express-rate-limit";
+    const commentLimiter = rateLimit({ windowMs: 60*000, max: 30 });
+    commentRouter.post("/", commentLimiter, async (req, res) => { /* ... \_/ });
 
 ## Audit
 

@@ -1,4 +1,3 @@
-
 /**
  * This middleware will:
  * 1. Extract JWT token from request header. The token is sent under 'Authorization' parameter and 'Bearer' prefix is
@@ -7,19 +6,24 @@
  * 3. Decode the JWT token and set user info in the request object and finally calls the next() method to handle request.
  */
 
-const jwt = require('jsonwebtoken');
+// middleware/extractUserInfo.js
+import jwt from "jsonwebtoken";
 
-const extractUserInfo = (request, response, next) => {
-  const token = request.header('Authorization').replace('Bearer ', '');
-  if (!token) return response.status(401).json({ message: "No token, authorization denied" });
+export default function extractUserInfo(req, res, next) {
+  const authHeader = req.get("Authorization");
+  if (!authHeader || !authHeader.startsWith("Bearer ")) {
+    return res.status(401).json({ message: "No token, authorization denied" });
+  }
 
+  const token = authHeader.slice(7).trim();
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    request.user = decoded;
-    next();
-  } catch (error) {
-    response.status(401).json({ message: "Token is not valid" });
+    req.user = decoded;
+    return next();
+  } catch (err) {
+    if (err.name === "TokenExpiredError") {
+      return res.status(401).json({ message: "Token expired" });
+    }
+    return res.status(401).json({ message: "Invalid or expired token" });
   }
-};
-
-module.exports = extractUserInfo;
+}
