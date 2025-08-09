@@ -118,6 +118,15 @@
     Parse only application/json and remove urlencoded parsing to prevent form data from being treated as valid JSON (helps mitigate CSRF).
     helmet + app.disable("x-powered-by") to enhance security header settings.
 
+### Lesson learned:
+
+1. Validate everything on the server
+   Client-side limits like input length are helpful but not enough. We found that without proper server checks, attackers can bypass restrictions or do NoSQL injection. Always check input types and filter out suspicious characters on the backend.
+2. Don’t forget await in async code
+   Missing await in password verification caused a big security hole — it skipped the password check! Handling async properly is critical, especially in security logic.
+3. Sanitize user input to avoid XSS
+   User comments weren’t cleaned, so scripts could be stored and run later (stored XSS). We need to sanitize or escape inputs to block this.
+
 ### Security testing of the upload functionality (manual + automated)
 
 1. Authentication / Access Control
@@ -159,6 +168,11 @@
    TOKEN='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9. eyJ1c2VySWQiOiIzMDM1NTQ3NjciLCJ1c2VybmFtZSI6IkRhdmlkd2FubG9uZyIsImRlcGFydG1lbnQiOiJociIsInJvbGUiOiJlbXBsb3llZSIsImlhdCI6MTc 1NDc0NzQxMywiZXhwIjoxNzU0NzUxMDEzfQ.QHJD3VFRVqNpL5RBKGNvrBho-B7r8Bv_8eqdPqxKqG0'
    curl -i -H "Authorization: Bearer $TOKEN" -F "file=@/etc/hosts" http://127.0.0.1:3000/file/
 
+## Lessons Learned from Upload Security Testing
+
+    Authentication is crucial: The upload endpoint correctly rejects requests without a valid token. This prevents unauthorized access, which is great.
+    Token error handling needs improvement: When an invalid token is sent, the server threw a 500 error instead of a clean 401 response. This not only confuses users but can also be exploited for denial-of-service attacks by flooding bad tokens. Better error catching is needed here.
+
 ### Security testing of CommentComposer
 
 1. Stored XSS
@@ -194,7 +208,6 @@
 
 3.CSRF Test
 
-<!-- csrf-comment.html -->
 <form action="http://127.0.0.1:3000/comment" method="POST">
   <input name="commenttxt" value="<b>csrf?</b>">
 </form>
@@ -221,6 +234,14 @@
     const commentLimiter = rateLimit({ windowMs: 60*000, max: 30 });
     commentRouter.post("/", commentLimiter, async (req, res) => { /* ... \_/ });
 
+### Lessons Learned from CommentComposer Security Testing
+
+    The backend did not sanitize or escape comment content, allowing stored XSS attacks. After integrating sanitize-html, malicious HTML is properly sanitized, the API returns 400 Bad Request for invalid input, effectively mitigating the risk.
+
+    Even though the client can forge the username field in the request body, the backend ignores it and uses the username from the JWT token, preventing identity spoofing in comments.
+
+    Frontend limits input length but it cannot be trusted alone. Adding backend rate limiting with express-rate-limit helps prevent comment spamming and DoS attacks.
+
 ## Audit
 
 #### ExpressApp Audit
@@ -246,6 +267,11 @@
 2. npm audit --json > audit-frontend-before.json
 3. npm audit
    found 0 vulnerabilities
+
+## Lessons Learned from the Audit Process
+
+    Running npm audit helped identify a high-severity vulnerability in the multer package used by the Express backend related to denial of service via malformed requests.
+    Upgrading multer from version 1.4.4-lts.1 to 2.0.2 fixed this vulnerability, showing the importance of keeping dependencies up to date.
 
 ## NMAP Test (nmap --version / brew install nmap)
 
@@ -316,3 +342,13 @@
 7. nmap -sV -p 3000 127.0.0.1 \
    --script http-enum \
    -vv -oN nmap-enum-3000.txt
+
+## Lessons Learned from Nmap Security Testing
+
+    backend uses Helmetenables key security headers .
+    Local vs Production Differences: Some headers like HSTS don’t work effectively on local HTTP, but they should be kept for production HTTPS environments.
+
+    Former CORS settings allowed many HTTP methods (GET, HEAD, PUT, PATCH, POST, DELETE), which is too broad and increases risk.
+
+    Automated Scans Help Identify Risks: Running specific Nmap scripts like http-headers, http-security-headers, http-methods, http-cors, and http-enum helped reveal configuration issues and potential security improvements.
+    CORS policy with tightened whitelist could avoid exposure to cross-origin attacks.
