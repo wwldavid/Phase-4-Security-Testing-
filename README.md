@@ -118,9 +118,9 @@
     Parse only application/json and remove urlencoded parsing to prevent form data from being treated as valid JSON (helps mitigate CSRF).
     helmet + app.disable("x-powered-by") to enhance security header settings.
 
-## audit
+## Audit
 
-### ExpressApp
+#### ExpressApp Audit
 
 1. cd /path/to/ExpressApp
 2. npm audit --json > audit-express-before.json
@@ -136,7 +136,7 @@
 5. npm audit
 6. npm audit --json > audit-express-after.json
 
-### UploadBox
+#### UploadBox Audit
 
 1. cd /path/to/UploadBox
 
@@ -144,7 +144,7 @@
 3. npm audit
    found 0 vulnerabilities
 
-## nmap test (nmap --version / brew install nmap)
+## NMAP Test (nmap --version / brew install nmap)
 
 1. nmap -sV -p 3000,5173 127.0.0.1 -oN nmap-services.txt
    CSP / HSTS and Other Security Headers Enabled (I have added Helmet)
