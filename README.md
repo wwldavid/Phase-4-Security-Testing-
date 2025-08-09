@@ -144,15 +144,6 @@
 3. npm audit
    found 0 vulnerabilities
 
-# 同理，如仍有高危且允许强制：
-
-npm audit fix --force #（可选）
-
-# 前端也分别保存 prod/dev 视角
-
-npm audit --omit=dev --json > audit-frontend-prod.json
-npm audit --json > audit-frontend-after.json
-
 ## nmap test (nmap --version / brew install nmap)
 
 1. nmap -sV -p 3000,5173 127.0.0.1 -oN nmap-services.txt
